@@ -1,4 +1,7 @@
 close all; clear all;
+%This script processes PTX files of contrast target scans (from a TLS) and
+%calculates its center. The standard deviation values of these centers are
+%calculated and compared against the output of OEM software. 
 
 %Some setup
 a1 = tic(); %To track time
@@ -19,7 +22,7 @@ fileMSK = filesMSK(1).name;
 fname3 = fullfile(folderMSK,fileMSK);
 maskData1 = dlmread(fname3);
 
-%First read all the OEM centers and take their statistics
+%First read all the OEM s/w calculated centers and take their statistics
 for kk = 1:length(filesCNT)  
     fileCNT = filesCNT(kk).name;
     fname2 = fullfile(folderCNT,fileCNT);    
@@ -39,7 +42,7 @@ end
 
 
 
-%For each scan, process the centers
+%For each scan, process the centers using the NIST developed code
 for jj = 1:length(filesPTX)
     filePTX = filesPTX(jj).name;
     fname1 = fullfile(folderPTX,filePTX);
@@ -49,6 +52,7 @@ for jj = 1:length(filesPTX)
     disp('Loading PTX file...');
     tic; [I1,xyzData,intData] = ptx2img3(fname1);toc;
     figure(1); clf; imshow(I1);tic;
+    set(gcf,'Position',[12   579   435   383]);
     
     %Obtain the 2D masks and for each 2D center process the PTX file
     for kk = 1:size(maskData1,1)
@@ -60,7 +64,7 @@ for jj = 1:length(filesPTX)
         pause(1);
         %maskParams(3) = floor(maskParams(3));
         
-        
+        %Obtain the results (center of the contrast target)
         results1 = contrastFun9(I1,xyzData,intData,1,maskParams);
         pCent4P = results1.pCent4P;
         
@@ -94,6 +98,8 @@ for jj = 1:length(filesPTX)
     
 end
 
+%Calculate the statistics to perform a comparision between the NIST method
+%and the OEM method.
 for kk = 1:size(finalCenter4,2)
     
     fCenterData3 = squeeze(finalCenter4(:,kk,:));
@@ -139,11 +145,14 @@ STD_OEM = OEMCenterSTDR.*RR_NEW
 
 ratio = centerSTD3./OEMCenterSTD
 
+%Here were are comparing the standard deviations of the centers calculated
+%by both the methods. 
 ratioSphINST1 = centerSTD3R./OEMCenterSTDR
-
 sum(ratioSphINST1(:))
 
-disp('STD - My method')
+%Here we are displaying the standard deviations of the centers in spherical
+%coordinate system.
+disp('STD - NIST method')
 round(centerSTD3R*1000,1)
 
 disp('STD - INST1')
